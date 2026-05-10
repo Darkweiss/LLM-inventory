@@ -3,19 +3,26 @@ import os
 import urllib.request
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
-# Load .env file if present
-_env_path = os.path.join(os.path.dirname(__file__), '.env')
-if os.path.exists(_env_path):
-    with open(_env_path) as f:
-        for line in f:
-            line = line.strip()
-            if line and not line.startswith('#') and '=' in line:
-                k, v = line.split('=', 1)
-                os.environ.setdefault(k.strip(), v.strip())
+# Load config from HA add-on options, .env file, or environment variables
+_ha_options = '/data/options.json'
+if os.path.exists(_ha_options):
+    with open(_ha_options) as f:
+        _opts = json.load(f)
+    CLAUDE_API_KEY  = _opts.get('claude_api_key', '')
+    APPS_SCRIPT_URL = _opts.get('apps_script_url', '')
+else:
+    _env_path = os.path.join(os.path.dirname(__file__), '.env')
+    if os.path.exists(_env_path):
+        with open(_env_path) as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith('#') and '=' in line:
+                    k, v = line.split('=', 1)
+                    os.environ.setdefault(k.strip(), v.strip())
+    CLAUDE_API_KEY  = os.environ.get('CLAUDE_API_KEY', '')
+    APPS_SCRIPT_URL = os.environ.get('APPS_SCRIPT_URL', '')
 
-CLAUDE_API_KEY  = os.environ.get('CLAUDE_API_KEY', '')
-APPS_SCRIPT_URL = os.environ.get('APPS_SCRIPT_URL', '')
-PORT            = int(os.environ.get('PORT', 8080))
+PORT = int(os.environ.get('PORT', 8080))
 
 SYSTEM_PROMPT = """\
 You are a home inventory assistant. Answer concisely in 1-3 sentences — your answer will be read aloud.
