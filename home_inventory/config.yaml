@@ -1,5 +1,5 @@
 name: Home Inventory
-version: "1.0.5"
+version: "1.0.6"
 slug: home_inventory
 description: Voice-searchable home inventory powered by Claude AI
 url: https://github.com/gantar9/LLM-inventory
@@ -8,6 +8,10 @@ arch:
 init: false
 ingress: true
 ingress_port: 8080
+ports:
+  8080/tcp: 8080
+ports_description:
+  8080/tcp: Web interface (direct access, no login required)
 panel_icon: mdi:magnify
 panel_title: Home Inventory
 options:
