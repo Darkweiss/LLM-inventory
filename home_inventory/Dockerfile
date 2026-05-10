@@ -1,4 +1,6 @@
-FROM ghcr.io/home-assistant/aarch64-base-python:3.11
+FROM ghcr.io/home-assistant/aarch64-base:3.20
+
+RUN apk add --no-cache python3
 
 WORKDIR /app
 
