@@ -1,5 +1,5 @@
 name: Home Inventory
-version: "1.0.1"
+version: "1.0.2"
 slug: home_inventory
 description: Voice-searchable home inventory powered by Claude AI
 url: https://github.com/gantar9/LLM-inventory
