@@ -218,6 +218,13 @@
     #add-item-form input:focus { border-color: #4361ee; }
     #add-item-form input::placeholder { color: #3a3f55; }
 
+    .add-form-header {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #e8eaf0;
+      margin-bottom: 4px;
+    }
+
     #add-form-buttons {
       display: flex;
       gap: 10px;
@@ -286,6 +293,7 @@
 <div id="add-item-section">
   <button id="add-item-btn">+ Add item</button>
   <form id="add-item-form" hidden>
+    <div class="add-form-header">Add a new item</div>
     <input id="add-box-input"   type="number" placeholder="Box ID"             inputmode="numeric" required>
     <input id="add-name-input"  type="text"   placeholder="Item name"                              required>
     <input id="add-qty-input"   type="number" placeholder="Quantity (optional)" inputmode="numeric" min="0">
@@ -499,6 +507,7 @@
     addForm.hidden = false;
     addBtn.hidden  = true;
     if (currentBox) addBoxInput.value = currentBox;
+    addForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
     addNameInput.focus();
   }
 

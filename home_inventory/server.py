@@ -112,7 +112,12 @@ class Handler(BaseHTTPRequestHandler):
         )
         opener = urllib.request.build_opener(_PostRedirectHandler)
         with opener.open(req, timeout=15) as r:
-            return json.loads(r.read())
+            raw = r.read()
+        try:
+            return json.loads(raw)
+        except json.JSONDecodeError:
+            snippet = raw[:300].decode('utf-8', 'replace').strip()
+            return {'ok': False, 'error': f'Apps Script returned non-JSON (likely doPost not deployed): {snippet!r}'}
 
     def _fetch_inventory(self):
         with urllib.request.urlopen(APPS_SCRIPT_URL, timeout=10) as r:
