@@ -246,7 +246,7 @@
   async function fetchInventory() {
     setStatus('Loading inventory…', '');
     try {
-      const res  = await fetch('/api/inventory');
+      const res  = await fetch('api/inventory');
       inventoryData = await res.json();
       if (currentBox) renderBoxContents(currentBox);
       setStatus('Ready', '');
@@ -284,7 +284,7 @@
     sendBtn.disabled = true;
 
     try {
-      const res  = await fetch('/api/ask', {
+      const res  = await fetch('api/ask', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ question, box: currentBox })
