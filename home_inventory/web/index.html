@@ -176,6 +176,88 @@
       0%, 100% { box-shadow: 0 0 0 0 #4ade8044; }
       50% { box-shadow: 0 0 0 8px #4ade8000; }
     }
+
+    #add-item-section {
+      margin: 0 24px 16px;
+    }
+
+    #add-item-btn {
+      background: #1e2233;
+      color: #a0a8c0;
+      border: 1px solid #2a2f45;
+      border-radius: 10px;
+      padding: 10px 16px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    #add-item-btn:hover { background: #252840; color: #e8eaf0; }
+
+    #add-item-form {
+      background: #13161f;
+      border: 1px solid #2a2f45;
+      border-radius: 10px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    #add-item-form input {
+      background: #0f1117;
+      border: 1px solid #2a2f45;
+      border-radius: 8px;
+      color: #e8eaf0;
+      font-size: 0.95rem;
+      padding: 10px 12px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    #add-item-form input:focus { border-color: #4361ee; }
+    #add-item-form input::placeholder { color: #3a3f55; }
+
+    #add-form-buttons {
+      display: flex;
+      gap: 10px;
+    }
+
+    #add-save-btn {
+      background: #4361ee;
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-size: 0.9rem;
+      font-weight: 600;
+      padding: 10px 18px;
+      cursor: pointer;
+    }
+
+    #add-save-btn:hover { background: #3451d1; }
+    #add-save-btn:disabled { background: #2a2f45; color: #4a5070; cursor: default; }
+
+    #add-cancel-btn {
+      background: transparent;
+      border: 1px solid #2a2f45;
+      border-radius: 8px;
+      color: #a0a8c0;
+      font-size: 0.9rem;
+      padding: 10px 18px;
+      cursor: pointer;
+    }
+
+    #add-cancel-btn:hover { background: #1e2233; }
+
+    #add-status {
+      font-size: 0.85rem;
+      color: #5a6080;
+      min-height: 18px;
+      margin-top: 4px;
+    }
+
+    #add-status.success { color: #4ade80; }
+    #add-status.error   { color: #f87171; }
   </style>
 </head>
 <body>
@@ -199,6 +281,21 @@
     </thead>
     <tbody id="box-table-body"></tbody>
   </table>
+</div>
+
+<div id="add-item-section">
+  <button id="add-item-btn">+ Add item</button>
+  <form id="add-item-form" hidden>
+    <input id="add-box-input"   type="number" placeholder="Box ID"             inputmode="numeric" required>
+    <input id="add-name-input"  type="text"   placeholder="Item name"                              required>
+    <input id="add-qty-input"   type="number" placeholder="Quantity (optional)" inputmode="numeric" min="0">
+    <input id="add-notes-input" type="text"   placeholder="Notes (optional)">
+    <div id="add-form-buttons">
+      <button type="submit" id="add-save-btn">Save</button>
+      <button type="button" id="add-cancel-btn">Cancel</button>
+    </div>
+    <div id="add-status"></div>
+  </form>
 </div>
 
 <main>
@@ -234,6 +331,16 @@
   const boxContents = document.getElementById('box-contents');
   const boxTableBody = document.getElementById('box-table-body');
 
+  const addBtn       = document.getElementById('add-item-btn');
+  const addForm      = document.getElementById('add-item-form');
+  const addBoxInput  = document.getElementById('add-box-input');
+  const addNameInput = document.getElementById('add-name-input');
+  const addQtyInput  = document.getElementById('add-qty-input');
+  const addNotesInput = document.getElementById('add-notes-input');
+  const addSaveBtn   = document.getElementById('add-save-btn');
+  const addCancelBtn = document.getElementById('add-cancel-btn');
+  const addStatusEl  = document.getElementById('add-status');
+
   const params     = new URLSearchParams(window.location.search);
   const currentBox = params.get('box') || null;
 
@@ -257,8 +364,8 @@
   }
 
   function renderBoxContents(boxId) {
-    const boxMeta = inventoryData.boxes.find(b => b['Box ID'] === boxId);
-    const items   = inventoryData.inventory.filter(i => i['Box ID'] === boxId);
+    const boxMeta = inventoryData.boxes.find(b => String(b['Box ID']) === String(boxId));
+    const items   = inventoryData.inventory.filter(i => String(i['Box ID']) === String(boxId));
 
     boxHeader.textContent = boxMeta
       ? `${boxMeta['Box ID']} — ${boxMeta['Box Name']}${boxMeta['Location'] ? ' · ' + boxMeta['Location'] : ''}`
@@ -385,6 +492,71 @@
       if (q) { askClaude(q); inputEl.value = ''; }
     }
   });
+
+  // ── Add item ─────────────────────────────────────────────────────────────
+
+  function openAddForm() {
+    addForm.hidden = false;
+    addBtn.hidden  = true;
+    if (currentBox) addBoxInput.value = currentBox;
+    addNameInput.focus();
+  }
+
+  function closeAddForm() {
+    addForm.hidden = true;
+    addBtn.hidden  = false;
+    addStatusEl.textContent = '';
+    addStatusEl.className   = '';
+    addNameInput.value  = '';
+    addQtyInput.value   = '';
+    addNotesInput.value = '';
+  }
+
+  async function submitAdd(e) {
+    e.preventDefault();
+    const box      = addBoxInput.value.trim();
+    const itemName = addNameInput.value.trim();
+    const qty      = addQtyInput.value.trim();
+    const notes    = addNotesInput.value.trim();
+    if (!box || !itemName) return;
+
+    addSaveBtn.disabled = true;
+    addStatusEl.textContent = 'Saving…';
+    addStatusEl.className   = '';
+
+    try {
+      const res  = await fetch('api/add-item', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          box: Number(box),
+          item_name: itemName,
+          quantity: qty === '' ? '' : Number(qty),
+          notes,
+        }),
+      });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || 'Save failed');
+
+      addStatusEl.textContent = `Added "${itemName}" to box ${box}`;
+      addStatusEl.className   = 'success';
+      addNameInput.value  = '';
+      addQtyInput.value   = '';
+      addNotesInput.value = '';
+      addNameInput.focus();
+
+      await fetchInventory();
+    } catch (err) {
+      addStatusEl.textContent = 'Error: ' + err.message;
+      addStatusEl.className   = 'error';
+    } finally {
+      addSaveBtn.disabled = false;
+    }
+  }
+
+  addBtn.addEventListener('click', openAddForm);
+  addCancelBtn.addEventListener('click', closeAddForm);
+  addForm.addEventListener('submit', submitAdd);
 
   sendBtn.disabled = true;
   initSpeech();

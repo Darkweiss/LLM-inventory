@@ -37,6 +37,19 @@ DATA SCHEMA:
 """
 
 
+class _PostRedirectHandler(urllib.request.HTTPRedirectHandler):
+    # Apps Script returns 302 → googleusercontent.com; default handler would downgrade POST to GET and lose the body.
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        if req.get_method() == 'POST' and code in (301, 302, 307):
+            return urllib.request.Request(
+                newurl,
+                data=req.data,
+                headers=dict(req.header_items()),
+                method='POST',
+            )
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
+
+
 class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
@@ -68,8 +81,38 @@ class Handler(BaseHTTPRequestHandler):
                 self._json(200, {'answer': answer})
             except Exception as e:
                 self._json(500, {'error': str(e)})
+
+        elif self.path == '/api/add-item':
+            length = int(self.headers.get('Content-Length', 0))
+            body   = json.loads(self.rfile.read(length))
+
+            try:
+                result = self._add_item(body)
+                status = 200 if result.get('ok') else 400
+                self._json(status, result)
+            except Exception as e:
+                self._json(500, {'ok': False, 'error': str(e)})
+
         else:
             self._respond(404, 'text/plain', b'Not found')
+
+    def _add_item(self, body):
+        payload = json.dumps({
+            'box':       body.get('box'),
+            'item_name': body.get('item_name', ''),
+            'notes':     body.get('notes', ''),
+            'quantity':  body.get('quantity', ''),
+        }).encode()
+
+        req = urllib.request.Request(
+            APPS_SCRIPT_URL,
+            data=payload,
+            headers={'content-type': 'application/json'},
+            method='POST',
+        )
+        opener = urllib.request.build_opener(_PostRedirectHandler)
+        with opener.open(req, timeout=15) as r:
+            return json.loads(r.read())
 
     def _fetch_inventory(self):
         with urllib.request.urlopen(APPS_SCRIPT_URL, timeout=10) as r:
