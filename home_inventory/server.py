@@ -130,9 +130,14 @@ class Handler(BaseHTTPRequestHandler):
 
 
 if __name__ == '__main__':
+    print('server.py startup', flush=True)
+    print(f'CLAUDE_API_KEY set: {bool(CLAUDE_API_KEY)}', flush=True)
+    print(f'APPS_SCRIPT_URL set: {bool(APPS_SCRIPT_URL)}', flush=True)
     if not CLAUDE_API_KEY:
-        raise SystemExit('Set CLAUDE_API_KEY environment variable')
+        print('ERROR: claude_api_key is empty', flush=True)
+        raise SystemExit(1)
     if not APPS_SCRIPT_URL:
-        raise SystemExit('Set APPS_SCRIPT_URL environment variable')
-    print(f'Serving on http://localhost:{PORT}')
+        print('ERROR: apps_script_url is empty', flush=True)
+        raise SystemExit(1)
+    print(f'Serving on http://0.0.0.0:{PORT}', flush=True)
     HTTPServer(('', PORT), Handler).serve_forever()
