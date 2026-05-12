@@ -58,16 +58,17 @@ function _doAdd(params) {
     const numericQty = Number(quantity);
     const qtyCell    = (quantity !== undefined && quantity !== '' && !isNaN(numericQty)) ? numericQty : '';
 
-    ss.getSheetByName('Inventory').appendRow([
-      isNaN(numericId) ? boxId : numericId,
-      '',
-      '',
-      itemName,
-      '',
-      '',
-      qtyCell,
-      notes,
-    ]);
+    const invSheet   = ss.getSheetByName('Inventory');
+    const invHeaders = invSheet.getRange(1, 1, 1, invSheet.getLastColumn()).getValues()[0];
+
+    const col = name => invHeaders.indexOf(name);
+    const row = new Array(invHeaders.length).fill('');
+    if (col('Box ID')    >= 0) row[col('Box ID')]    = isNaN(numericId) ? boxId : numericId;
+    if (col('Item Name') >= 0) row[col('Item Name')] = itemName;
+    if (col('Quantity')  >= 0) row[col('Quantity')]  = qtyCell;
+    if (col('Notes')     >= 0) row[col('Notes')]     = notes;
+
+    invSheet.appendRow(row);
 
     return _json({ok: true, box: boxId, item_name: itemName});
   } catch (err) {
