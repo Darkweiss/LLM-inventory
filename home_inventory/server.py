@@ -83,6 +83,21 @@ class Handler(BaseHTTPRequestHandler):
             except Exception as e:
                 self._json(500, {'error': str(e)})
 
+        elif self.path == '/api/debug-add':
+            length = int(self.headers.get('Content-Length', 0))
+            body   = json.loads(self.rfile.read(length)) if length else {}
+            params = urllib.parse.urlencode({
+                'action': 'add', 'box': body.get('box', 'TEST'),
+                'item_name': body.get('item_name', 'debug'), 'notes': '', 'quantity': '',
+            })
+            url = f'{APPS_SCRIPT_URL}?{params}'
+            try:
+                with urllib.request.urlopen(url, timeout=15) as r:
+                    raw = r.read()
+                self._respond(200, 'text/plain', f'URL: {url}\n\nRESPONSE:\n'.encode() + raw)
+            except Exception as e:
+                self._respond(200, 'text/plain', f'URL: {url}\n\nERROR: {e}'.encode())
+
         elif self.path == '/api/add-item':
             length = int(self.headers.get('Content-Length', 0))
             body   = json.loads(self.rfile.read(length))
