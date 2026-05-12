@@ -60,8 +60,8 @@ function _doAdd(params) {
 
     ss.getSheetByName('Inventory').appendRow([
       isNaN(numericId) ? boxId : numericId,
-      boxRow[nameCol],
-      boxRow[locCol],
+      '',
+      '',
       itemName,
       '',
       '',
