@@ -195,11 +195,11 @@
     #add-item-btn:hover { background: #252840; color: #e8eaf0; }
 
     #add-item-form {
+      display: none;
       background: #13161f;
       border: 1px solid #2a2f45;
       border-radius: 10px;
       padding: 16px;
-      display: flex;
       flex-direction: column;
       gap: 10px;
     }
@@ -292,7 +292,7 @@
 
 <div id="add-item-section">
   <button id="add-item-btn">+ Add item</button>
-  <form id="add-item-form" hidden>
+  <form id="add-item-form">
     <div class="add-form-header">Add a new item</div>
     <input id="add-box-input"   type="number" placeholder="Box ID"             inputmode="numeric" required>
     <input id="add-name-input"  type="text"   placeholder="Item name"                              required>
@@ -504,7 +504,7 @@
   // ── Add item ─────────────────────────────────────────────────────────────
 
   function openAddForm() {
-    addForm.hidden = false;
+    addForm.style.display = 'flex';
     addBtn.hidden  = true;
     if (currentBox) addBoxInput.value = currentBox;
     addForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -512,7 +512,7 @@
   }
 
   function closeAddForm() {
-    addForm.hidden = true;
+    addForm.style.display = 'none';
     addBtn.hidden  = false;
     addStatusEl.textContent = '';
     addStatusEl.className   = '';
