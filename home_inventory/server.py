@@ -1,5 +1,6 @@
 import json
 import os
+import urllib.parse
 import urllib.request
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
@@ -97,27 +98,21 @@ class Handler(BaseHTTPRequestHandler):
             self._respond(404, 'text/plain', b'Not found')
 
     def _add_item(self, body):
-        payload = json.dumps({
-            'box':       body.get('box'),
+        params = urllib.parse.urlencode({
+            'action':    'add',
+            'box':       body.get('box', ''),
             'item_name': body.get('item_name', ''),
             'notes':     body.get('notes', ''),
             'quantity':  body.get('quantity', ''),
-        }).encode()
-
-        req = urllib.request.Request(
-            APPS_SCRIPT_URL,
-            data=payload,
-            headers={'content-type': 'application/json'},
-            method='POST',
-        )
-        opener = urllib.request.build_opener(_PostRedirectHandler)
-        with opener.open(req, timeout=15) as r:
+        })
+        url = f'{APPS_SCRIPT_URL}?{params}'
+        with urllib.request.urlopen(url, timeout=15) as r:
             raw = r.read()
         try:
             return json.loads(raw)
         except json.JSONDecodeError:
             snippet = raw[:300].decode('utf-8', 'replace').strip()
-            return {'ok': False, 'error': f'Apps Script returned non-JSON (likely doPost not deployed): {snippet!r}'}
+            return {'ok': False, 'error': f'Apps Script returned non-JSON: {snippet!r}'}
 
     def _fetch_inventory(self):
         with urllib.request.urlopen(APPS_SCRIPT_URL, timeout=10) as r:

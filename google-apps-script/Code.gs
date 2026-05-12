@@ -3,6 +3,8 @@
 const SPREADSHEET_ID = '1Jn6mYpmr9PukyJmzvnkeFNtB4pFfvgVt3vvxJyL45v4';
 
 function doGet(e) {
+  if (e.parameter.action === 'add') return _doAdd(e.parameter);
+
   const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
 
   const invSheet = ss.getSheetByName('Inventory');
@@ -30,20 +32,15 @@ function doGet(e) {
     .setMimeType(ContentService.MimeType.JSON);
 }
 
-function doPost(e) {
+function _doAdd(params) {
   try {
-    const body = JSON.parse(e.postData.contents);
-    const boxId    = body.box;
-    const itemName = (body.item_name || '').trim();
-    const notes    = (body.notes     || '').trim();
-    const quantity = body.quantity;
+    const boxId    = params.box;
+    const itemName = (params.item_name || '').trim();
+    const notes    = (params.notes     || '').trim();
+    const quantity = params.quantity;
 
-    if (boxId === undefined || boxId === null || boxId === '') {
-      return _json({ok: false, error: 'box is required'});
-    }
-    if (!itemName) {
-      return _json({ok: false, error: 'item_name is required'});
-    }
+    if (!boxId) return _json({ok: false, error: 'box is required'});
+    if (!itemName) return _json({ok: false, error: 'item_name is required'});
 
     const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
 
@@ -55,19 +52,13 @@ function doPost(e) {
     const locCol     = boxHeaders.indexOf('Location');
 
     const boxRow = boxData.slice(1).find(row => String(row[idCol]) === String(boxId));
-    if (!boxRow) {
-      return _json({ok: false, error: 'Box ID ' + boxId + ' not found'});
-    }
+    if (!boxRow) return _json({ok: false, error: 'Box ID ' + boxId + ' not found'});
 
-    const numericId = Number(boxId);
-    const invSheet  = ss.getSheetByName('Inventory');
-    let qtyCell = '';
-    if (quantity !== undefined && quantity !== null && quantity !== '') {
-      const numericQty = Number(quantity);
-      qtyCell = isNaN(numericQty) ? quantity : numericQty;
-    }
+    const numericId  = Number(boxId);
+    const numericQty = Number(quantity);
+    const qtyCell    = (quantity !== undefined && quantity !== '' && !isNaN(numericQty)) ? numericQty : '';
 
-    invSheet.appendRow([
+    ss.getSheetByName('Inventory').appendRow([
       isNaN(numericId) ? boxId : numericId,
       boxRow[nameCol],
       boxRow[locCol],
